@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>JWT Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      width: 320px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,.1);
+    }
+    h2 {
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+    }
+    button {
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 15px;
+      font-weight: bold;
+      text-align: center;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>JWT</h2>
+
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+
+    <button onclick="login()">Enviar</button>
+
+    <div id="result"></div>
+
+    <button onclick="current()">Recuperar datos</button>
+  </div>
+
+  <script>
+    window.login = async function () {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const result = document.getElementById('result');
+
+      result.innerText = 'Procesando...';
+
+      const res = await fetch('/api/sessions/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) {
+        result.innerText = '❌ Credenciales inválidas';
+        result.style.color = 'red';
+        return;
+      }
+
+      result.innerText = '✅ Autorizado';
+      result.style.color = 'green';
+    };
+
+    window.current = async function () {
+      const result = document.getElementById('result');
+      result.innerText = 'Consultando usuario...';
+
+      const res = await fetch('/api/sessions/current', {
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        result.innerText = '❌ No autorizado';
+        result.style.color = 'red';
+        return;
+      }
+
+      const data = await res.json();
+      result.style.color = 'black';
+      result.innerText = JSON.stringify(data, null, 2);
+    };
+  </script>
+
+</body>
+</h
