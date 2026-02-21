@@ -1,15 +1,15 @@
 import passport from 'passport';
 import local from 'passport-local';
 import jwt from 'passport-jwt';
+import bcrypt from 'bcrypt';
 import User from '../models/user.model.js';
-import { isValidPassword } from '../utils/bcrypt.js';
 import config from './config.js';
 
 const LocalStrategy = local.Strategy;
 const JWTStrategy = jwt.Strategy;
 
 /* 👇 FUNCIÓN PARA LEER JWT DESDE COOKIE */
-const cookieExtractor = req => {
+const cookieExtractor = (req) => {
   let token = null;
   if (req && req.cookies) {
     token = req.cookies.jwt;
@@ -17,33 +17,67 @@ const cookieExtractor = req => {
   return token;
 };
 
-export const initializePassport = () => {
+const initializePassport = () => {
+
+  /* ================= LOGIN ================= */
+
   passport.use(
     'login',
     new LocalStrategy(
       { usernameField: 'email' },
       async (email, password, done) => {
-        const user = await User.findOne({ email });
-        if (!user) return done(null, false);
+        try {
+          const user = await User.findOne({ email });
 
-        if (!isValidPassword(user, password)) return done(null, false);
+          if (!user) {
+            console.log(" Usuario no encontrado");
+            return done(null, false, { message: 'Usuario no encontrado' });
+          }
 
-        return done(null, user);
+          
+
+          const isValid = await bcrypt.compare(password, user.password);
+
+          
+          if (!isValid) {
+            return done(null, false, { message: 'Contraseña incorrecta' });
+          }
+
+         
+          return done(null, user);
+
+        } catch (error) {
+          return done(error);
+        }
       }
     )
   );
+
+  /* ================= JWT ================= */
 
   passport.use(
     'jwt',
     new JWTStrategy(
       {
-        jwtFromRequest: cookieExtractor, // 👈 CLAVE
+        jwtFromRequest: cookieExtractor,
         secretOrKey: config.JWT_SECRET
       },
       async (jwt_payload, done) => {
-        const user = await User.findById(jwt_payload.id);
-        return done(null, user);
+        try {
+          const user = await User.findById(jwt_payload.id);
+
+          if (!user) {
+            return done(null, false);
+          }
+
+          return done(null, user);
+
+        } catch (error) {
+          return done(error, false);
+        }
       }
     )
   );
 };
+
+export default initializePassport;

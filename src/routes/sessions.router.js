@@ -2,26 +2,20 @@ import { Router } from 'express';
 import passport from 'passport';
 import User from '../models/user.model.js';
 import { createHash } from '../utils/bcrypt.js';
-import { login, current } from '../controllers/sessions.controller.js';
+
+import {
+  login,
+  current,
+  forgotPassword,
+  resetPassword
+} from '../controllers/sessions.controller.js';
 
 const router = Router();
 
-/* ---------- LOGIN ---------- */
+
 router.post(
   '/login',
-  (req, res, next) => {
-    passport.authenticate('login', { session: false }, (err, user) => {
-      if (err || !user) {
-        return res.status(401).json({
-          status: 'error',
-          message: 'Credenciales inválidas'
-        });
-      }
-
-      req.user = user;
-      next();
-    })(req, res, next);
-  },
+  passport.authenticate('login', { session: false }),
   login
 );
 
@@ -60,6 +54,7 @@ router.post('/register', async (req, res) => {
       status: 'success',
       message: 'User registered'
     });
+
   } catch (error) {
     res.status(500).json({
       status: 'error',
@@ -67,5 +62,8 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 export default router;
